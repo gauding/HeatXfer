@@ -6,6 +6,8 @@ Applied Heat transfer Project 1
 %so strong
 %so masculine
 %so incredible
+
+%fernando has a super bald head 
 clc 
 clear all 
 close all 
