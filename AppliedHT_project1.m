@@ -2,7 +2,10 @@
 Genevieve Gaudin and Austin Warren 
 Applied Heat transfer Project 1 
 %} 
-
+%Fernando is the best goddam  person ever
+%so strong
+%so masculine
+%so incredible
 clc 
 clear all 
 close all 
