@@ -8,6 +8,9 @@ Applied Heat transfer Project 1
 %so incredible
 
 %fernando has a super bald head 
+%genevieve is a short meanue poopie head
+%fernandos bald head is actually relaly great and hes not self conscious
+%about it
 clc 
 clear all 
 close all 
