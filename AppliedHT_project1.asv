@@ -83,6 +83,7 @@ k = [K_Al; K_CI; K_Br];
 % all are on the spreadsheet
 time = zeros(length(rho),1); % time to get to 190 deg C on cook surface (s)
 index = zeros(length(rho),1); % index for time to 190 deg C
+tol = [0.001, 0.0000001, 0.0000001];
 Q_absorbed = zeros(length(rho),1); % total heat absorbed in this time (kJ/m)
 Q_lost = zeros(length(rho),1); % total heat lost to convection (W/m)
 Q_lost_ss = zeros(length(rho),1); % heast lost to convection at steady state temp (W/m)
@@ -176,8 +177,10 @@ for i = 1:length(rho)
     % find the time
     tot_time = (length(T_top_mid)-1) * dt(i);
     t = 0:dt(i):tot_time;
-    index(i) = 
-    [time(i),index(i)] = max(T_top_mid(find(T_top_mid < T_goal))); % find the time to reach desired temp -- may need to use find function
+    F = find(T_top_mid < T_goal);
+    index(i) = F(end) + 1;
+    time(i) = (index(i)-1)*dt(i);
+    %[time(i),index(i)] = max(T_top_mid(find(T_top_mid < T_goal))); % find the time to reach desired temp -- may need to use find function
     
     % plot some stuff
     figure(i)
@@ -189,6 +192,30 @@ for i = 1:length(rho)
     ylabel('Temperature (K)')
     
     
+    %% Lumped Capacitance calculations 
+    
+    %Find the Biot number 
+    
+    Bi(i)= h*thickness./(k(i)); 
+    
+    %lumped Capacitance doesn't actually work for the brick because of the
+    %low k 
+    
+    %variables used in the lumped capacitance solution 
+    Asc= width+2*thickness ;
+    Asq= width ; 
+    
+    
+    Vol= width*thickness; 
+    
+    a= (h*As)/ (rho(i)* Vol* c(i)) ; 
+    
+    b= (q_flux*As) / (rho(i)*Vol*c(i)); 
+    
+    
+    exp(a*time) ((T_lump-T_amb)/ (Ti-T_amb)) 
+    
+    
     
     
 end
@@ -198,6 +225,14 @@ fprintf('Time to 190 deg C for Al: %f seconds\n',time(1));
 fprintf('Time to 190 deg C for Cast Iron: %f seconds\n',time(2));
 fprintf('Time to 190 deg C for Ceramic: %f seconds\n',time(3));
 
+%% TO DO:
+
+% lumped capacitance lol
+% all of the other answers
+% plot for temp at centerline at one-half time
+% h is halfed
+% steady state stuff
+% heat lost to convection -- lumped capacitance?
 
 
 

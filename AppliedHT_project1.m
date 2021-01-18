@@ -95,7 +95,7 @@ time_half_h = zeros(length(rho),1); % time to 190 deg C with half h value (s)
 % plot title cell array to generate plot titles in the loop
 plot_title = {'Top Center Temperature vs Time for Aluminum','Top Center Temperature vs Time for Cast Iron','Top Center Temperature vs Time for Ceramic Brick'};
 
-max_count = 100000;
+max_count = 1e5;
 % actually start the loop now
 for i = 1:length(rho)
     
@@ -192,7 +192,35 @@ for i = 1:length(rho)
     ylabel('Temperature (K)')
     
     
+    %% Lumped Capacitance calculations 
     
+    %Find the Biot number 
+    
+    Bi(i)= h*thickness./(k(i)); 
+    
+    %lumped Capacitance doesn't actually work for the brick because of the
+    %low k 
+    
+    %variables used in the lumped capacitance solution 
+    Asc= width+2*thickness ;
+    Asq= width ; 
+    
+    
+    Vol= width*thickness; 
+    
+    a= (h*Asc)/ (rho(i)* Vol* c(i)) ; 
+    
+    b= (q_flux*Asq) / (rho(i)*Vol*c(i)); 
+    
+    
+    fcn=@(time) exp(-a*time)+((b/a)/(Ti-T_amb))*(1-exp(-a*time)) -((T_goal-T_amb)/ (Ti-T_amb)) ; 
+    time(i)= fzero(fcn, 1) 
+    
+    figure(4) 
+    plot ( T(:,ceil(length(y)/2) ), y) 
+    hold on 
+    xlabel("Temperature (K) " ) 
+    ylabel ("Thickness of Plancha") 
     
 end
 
@@ -211,6 +239,8 @@ fprintf('Time to 190 deg C for Ceramic: %f seconds\n',time(3));
 % heat lost to convection -- lumped capacitance?
 
 
+q_loss= h*Asc*(T_goal-T_amb) 
 
+%% making the fun plot 
 
 
