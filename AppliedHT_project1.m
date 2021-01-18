@@ -32,3 +32,4 @@ Cp_Br= 960; %J/KgK
 
 %% I need to add shit 
 
+%edit 2 that fernando needed to teach me how to do this 
