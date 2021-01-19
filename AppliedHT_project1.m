@@ -140,7 +140,7 @@ for i = 1:length(rho)
      
     count=1; 
     error=1; 
-    while count<max_count(i) && error>1e-5
+    while count<max_count(i) && error>1e-7
         % for loop for x direction
         for m = 1:length(x)
             
@@ -196,7 +196,7 @@ for i = 1:length(rho)
         %if T_top_mid(count+1) > T_goal
         %    break
         %end
-        if count>1 
+        if count>1 && T_top_mid(count) > (Ti + 10)
             
             error= abs(T_top_mid(count)- T_top_mid(count-1)); 
         end 
@@ -277,8 +277,8 @@ fprintf('LC Time to 190 deg C for Ceramic: %f seconds\n',time_LC(3));
 Q_conv_loss_goal = h*(2*thickness + width)*(T_goal - T_amb); % heat lost to convection at operating temp (W/m)
 Q_conv_loss_ss = h*(2*thickness + width)*(T_ss_LC(1) - T_amb); % heat lost to convection at steady state temp (W/m)
 Q_absorbed_goal = rho.*thickness.*width.*c.*(T_goal-Ti)/1000; % heat absorbed by plancha at operating temp (kJ/m)
-q_flux_goal = (T_ss_LC(1)- T_amb) * (h*thickness*(2/width + 1/thickness)); % heat flux required to maintain goal temp
-T_half_t = (Ti - T_amb - b./a).*exp(-a.*time_LC) + T_amb + b./a; % temp at half time to 190 deg C
+q_flux_goal = (T_goal- T_amb) * (h*thickness*(2/width + 1/thickness)); % heat flux required to maintain goal temp
+T_half_t = (Ti - T_amb - b./a).*exp(-a.*time_LC./2) + T_amb + b./a; % temp at half time to 190 deg C
 time_LC_half_h = 1./(a./2) .* log((Ti-T_amb-(b./(a./2)))./(T_goal-T_amb-(b./(a./2)))); % time to 190 deg C at half h
 
 
@@ -299,16 +299,16 @@ data_out(12,:) = T_ss_LC-273; % steady state temp at given flux (deg C)
 data_out(13,:) = Q_conv_loss_goal; % heat lost to convection at operating temp (W/m)
 data_out(14,:) = Q_conv_loss_ss; % heat lost to convection at steady state temp (W/m)
 data_out(15,:) = q_flux_goal; % heat flux required to maintain goal temp as ss (W/m^2)
-data_out(16,:) = T_half_t; % temp at top mid at half time
-data_out(17,:) = time_LC_half_h; % time to 190 deg C for half h value
+data_out(16,:) = T_half_t-273; % temp at top mid at half time (deg C)
+data_out(17,:) = time_LC_half_h; % time to 190 deg C for half h value (s)
 
 % this might not work on earlier versions of MATLAB -- let me know and we
 % can figure it out
-%{
+%
 filename = 'Project 1 Results Template.xlsx'; % name of spreadsheet file
-xlswrite(data_out,filename,'Sheet','Sheet1','Range','B4:D20') % writes data to spreadsheet
+writematrix(data_out,filename,'Sheet','Sheet1','Range','B4:D20') % writes data to spreadsheet
 writecell({'Textbook','Textbook','Textbook'},filename,'Sheet','Sheet1','Range','B8:D8') % writes source of properties to spreadsheet
-%}
+%
 %% TO DO:
 
 % plot for temp at centerline at one-half time -- Genevieve claimed
