@@ -53,6 +53,9 @@ width = 0.45; % width given by problem in meters
 thickness = 0.01; % thickness given by problem in meters
 
 
+
+
+
 %% Domain stuff (Genevieve already did this, but not in this edit?) -- whack
 
 
@@ -72,8 +75,17 @@ rho = [rho_Al; rho_CI; rho_Br];
 c = [Cp_Al; Cp_CI; Cp_Br];
 k = [K_Al; K_CI; K_Br];
 
+% lumped capacitance things
+a = h.*(2./width + 1./thickness)./(rho.*c);
+b = q_flux./(rho.*c.*thickness);
+% Bi calcs
+Bi = h * thickness ./ k;
+
 
 [dt] = find_dt_please(rho, c, k, h, dx, dy); % function to find the most restrictive dt
+
+% Fo
+Fo = k./rho./c.*dt./dx^2; % fourier number in the x direction -- may need to change to y
 
 
 %% LOOPS!! -- for loop for materials, while loop for time/converging on answer, for loop for x, for y
@@ -83,6 +95,9 @@ k = [K_Al; K_CI; K_Br];
 % all are on the spreadsheet
 time = zeros(length(rho),1); % time to get to 190 deg C on cook surface (s)
 index = zeros(length(rho),1); % index for time to 190 deg C
+time_LC = zeros(length(rho),1); % time to get to 190 deg C on cook surface (s) (for lumped capacitance)
+T_ss_LC = zeros(length(rho),1); % steady state temp for lumped capacitance
+T_ss = zeros(length(rho),1); % steady state temp for finite diff
 tol = [0.001, 0.0000001, 0.0000001];
 Q_absorbed = zeros(length(rho),1); % total heat absorbed in this time (kJ/m)
 Q_lost = zeros(length(rho),1); % total heat lost to convection (W/m)
@@ -95,7 +110,7 @@ time_half_h = zeros(length(rho),1); % time to 190 deg C with half h value (s)
 % plot title cell array to generate plot titles in the loop
 plot_title = {'Top Center Temperature vs Time for Aluminum','Top Center Temperature vs Time for Cast Iron','Top Center Temperature vs Time for Ceramic Brick'};
 
-max_count = 100000;
+max_count = [2500000, 1000000, 20000];
 % actually start the loop now
 for i = 1:length(rho)
     
@@ -108,12 +123,12 @@ for i = 1:length(rho)
     % need to create T array
     T = zeros(length(x), length(y)); % create array of zeros
     T = T + Ti; % add the initial condition
-    T_top_mid = zeros(max_count+1, 1); 
+    T_top_mid = zeros(max_count(i)+1, 1); 
     T_top_mid(1) = T(ceil(length(x)/2), ceil(length(y))); % find the initial top mid value
     %err = abs(T_top_mid - T_goal); % stop condition
     % start while loop ( actually using for loop because idexing is used
     % for keeping track of the temp)
-    for count = 1:max_count
+    for count = 1:max_count(i)
     
         % for loop for x direction
         for m = 1:length(x)
@@ -191,24 +206,63 @@ for i = 1:length(rho)
     xlabel('Time (s)')
     ylabel('Temperature (K)')
     
+    % Lumped Capacitance
+    time_LC(i) = 1/a(i) * log((Ti-T_amb-(b(i)/a(i)))/(T_goal-T_amb-(b(i)/a(i)))); % time to desired temp using lumped capacitance method
     
-    
-    
+    % Lumped Capacitance steady state temp
+    T_ss_LC(i) = T_amb + (b(i)/a(i));
+    % finite diff steady state temp
+    T_ss(i) = T_top_mid(end);
 end
 
 % print the times
 fprintf('Time to 190 deg C for Al: %f seconds\n',time(1));
 fprintf('Time to 190 deg C for Cast Iron: %f seconds\n',time(2));
 fprintf('Time to 190 deg C for Ceramic: %f seconds\n',time(3));
+fprintf('LC Time to 190 deg C for Al: %f seconds\n',time_LC(1));
+fprintf('LC Time to 190 deg C for Cast Iron: %f seconds\n',time_LC(2));
+fprintf('LC Time to 190 deg C for Ceramic: %f seconds\n',time_LC(3));
+
+%% More Lumped Capacitance Calcs
+Q_conv_loss_goal = h*(2*thickness + width)*(T_goal - T_amb); % heat lost to convection at operating temp (W/m)
+Q_conv_loss_ss = h*(2*thickness + width)*(T_ss_LC(1) - T_amb); % heat lost to convection at steady state temp (W/m)
+Q_absorbed_goal = rho.*thickness.*width.*c.*(T_goal-Ti)/1000; % heat absorbed by plancha at operating temp (kJ/m)
+q_flux_goal = (T_ss_LC(1)- T_amb) * (h*thickness*(2/width + 1/thickness)); % heat flux required to maintain goal temp
+T_half_t = (Ti - T_amb - b./a).*exp(-a.*time_LC) + T_amb + b./a; % temp at half time to 190 deg C
+time_LC_half_h = 1./(a./2) .* log((Ti-T_amb-(b./(a./2)))./(T_goal-T_amb-(b./(a./2)))); % time to 190 deg C at half h
+
+
+%% Write the data into the spreadsheet
+data_out = zeros(17,3);
+data_out(1,:) = thickness; % thickness of plancha
+data_out(2,:) = k; % conductivity
+data_out(3,:) = rho; % density
+data_out(4,:) = c; % specific heat
+data_out(5,:) = 0;%'Textbook'; % source for properties -- need to figure out how to do text - maybe cell array?
+data_out(6,:) = Bi; % Bi
+data_out(7,:) = dx; % delta x
+data_out(8,:) = Fo; % Fo
+data_out(9,:) = dt; % delta t
+data_out(10,:) = time_LC; % time to 190 deg C
+data_out(11,:) = Q_absorbed_goal; % absorbed heat at operating temp
+data_out(12,:) = T_ss_LC-273; % steady state temp at given flux (deg C)
+data_out(13,:) = Q_conv_loss_goal; % heat lost to convection at operating temp (W/m)
+data_out(14,:) = Q_conv_loss_ss; % heat lost to convection at steady state temp (W/m)
+data_out(15,:) = q_flux_goal; % heat flux required to maintain goal temp as ss (W/m^2)
+data_out(16,:) = T_half_t; % temp at top mid at half time
+data_out(17,:) = time_LC_half_h; % time to 190 deg C for half h value
+
+filename = 'Project 1 Results Template.xlsx'; % name of spreadsheet file
+writematrix(data_out,filename,'Sheet','Sheet1','Range','B4:D20') % writes data to spreadsheet
+writecell({'Textbook','Textbook','Textbook'},filename,'Sheet','Sheet1','Range','B8:D8') % writes source of properties to spreadsheet
 
 %% TO DO:
 
-% lumped capacitance lol
-% all of the other answers
-% plot for temp at centerline at one-half time
-% h is halfed
-% steady state stuff
-% heat lost to convection -- lumped capacitance?
+% plot for temp at centerline at one-half time -- Genevieve claimed
+% plot for temp over time with LC? -- finite diff and lumped capacitance
+% are different
+
+
 
 
 
