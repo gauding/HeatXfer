@@ -110,7 +110,11 @@ time_half_h = zeros(length(rho),1); % time to 190 deg C with half h value (s)
 % plot title cell array to generate plot titles in the loop
 plot_title = {'Top Center Temperature vs Time for Aluminum','Top Center Temperature vs Time for Cast Iron','Top Center Temperature vs Time for Ceramic Brick'};
 
+
 max_count = [2500000, 1000000, 20000];
+
+%max_count = 1e5; % commenting out to reduce conflict -- AMW
+
 % actually start the loop now
 for i = 1:length(rho)
     
@@ -209,10 +213,43 @@ for i = 1:length(rho)
     % Lumped Capacitance
     time_LC(i) = 1/a(i) * log((Ti-T_amb-(b(i)/a(i)))/(T_goal-T_amb-(b(i)/a(i)))); % time to desired temp using lumped capacitance method
     
+
     % Lumped Capacitance steady state temp
     T_ss_LC(i) = T_amb + (b(i)/a(i));
     % finite diff steady state temp
     T_ss(i) = T_top_mid(end);
+
+    %% Lumped Capacitance calculations 
+    
+    %Find the Biot number 
+    
+    %Bi(i)= h*thickness./(k(i)); % commenting out bc it is calc'ed further up and to reduce conflict --AMW
+    
+    %lumped Capacitance doesn't actually work for the brick because of the
+    %low k 
+    
+    %variables used in the lumped capacitance solution 
+    Asc= width+2*thickness ;
+    Asq= width ; 
+    
+    
+    Vol= width*thickness; 
+    
+    %a= (h*Asc)/ (rho(i)* Vol* c(i)) ; % commenting out bc it is calc'ed further up and to reduce conflict --AMW
+    
+    %b= (q_flux*Asq) / (rho(i)*Vol*c(i)); % commenting out bc it is calc'ed further up and to reduce conflict --AMW
+    
+    
+    %fcn=@(time) exp(-a*time)+((b/a)/(Ti-T_amb))*(1-exp(-a*time)) -((T_goal-T_amb)/ (Ti-T_amb)) ; 
+    %time(i)= fzero(fcn, 1) % commenting out for now to reduce conflict, this did not want to run when I tried, even with changing variable names -- AMW
+    
+    figure(4) 
+    plot ( T(:,ceil(length(y)/2) ), y) 
+    hold on 
+    xlabel("Temperature (K) " ) 
+    ylabel ("Thickness of Plancha") 
+    
+
 end
 
 % print the times
@@ -266,7 +303,9 @@ writecell({'Textbook','Textbook','Textbook'},filename,'Sheet','Sheet1','Range','
 
 
 
+%% Genevieve's stuff that got put at the bottom during the merge
+q_loss= h*Asc*(T_goal-T_amb) 
 
-
+%% making the fun plot 
 
 
