@@ -60,7 +60,7 @@ thickness = 0.01; % thickness given by problem in meters
 
 
 % x direction
-dx = 0.045; % dx for 10 steps in x (0.45m/10) in meters
+dx = 0.001; % dx for 10 steps in x (0.45m/10) in meters
 
 x = 0:dx:width; % total x array
 
@@ -112,7 +112,7 @@ time_half_h = zeros(length(rho),1); % time to 190 deg C with half h value (s)
 plot_title = {'Top Center Temperature vs Time for Aluminum','Top Center Temperature vs Time for Cast Iron','Top Center Temperature vs Time for Ceramic Brick'};
 
 
-max_count = [2500000, 1000000, 2000];
+max_count = [250000000, 100000000, 20000000];
 
 %max_count = 1e5; % commenting out to reduce conflict -- AMW
 
@@ -127,11 +127,11 @@ for i = 1:length(rho)
     
     
     % need to create T array
-    T = zeros(length(x), length(y)); % create array of zeros
+    T = zeros(length(y), length(x)); % create array of zeros
     T = T + Ti; % add the initial condition
     
     %T_top_mid = zeros(max_count(i)+1, 1); 
-    %T_top_mid(1) = T(ceil(length(x)/2), ceil(length(y))); % find the initial top mid value
+    T_top_mid(1) = T(ceil(length(y)),ceil(length(x)/2)); % find the initial top mid value
     %err = abs(T_top_mid - T_goal); % stop condition
     % start while loop ( actually using for loop because idexing is used
     % for keeping track of the temp)
@@ -155,31 +155,31 @@ for i = 1:length(rho)
                 %GG: matlab indicies are weird! The first index is the row
                 %and the second is the column, so these need to be T(n, m) 
                 if m==1 && n==1 % bottom left corner
-                    T(n, m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) - (2*beta*dt(i)/dx) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(m,n+1)) + (2*alpha*dt(i)/dx^2*T(m+1,n)) + (2*beta*dt(i)/dx*T_amb);
+                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) - (2*beta*dt(i)/dx) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(n+1,m)) + (2*alpha*dt(i)/dx^2*T(n,m+1)) + (2*beta*dt(i)/dx*T_amb);
                 % bottom between corners
                 elseif m>1 && m<length(x) && n==1 % bottom between corners
-                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(m,n+1)) + (alpha*dt(i)/dx^2*(T(m+1,n) + T(m-1,n)));
+                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(n+1,m)) + (alpha*dt(i)/dx^2*(T(n,m+1) + T(n,m-1)));
                 % bottom right corner
                 elseif m==length(x) && n==1 % bottom right corner
-                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) - (2*beta*dt(i)/dx) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(m,n+1)) + (2*alpha*dt(i)/dx^2*T(m-1,n)) + (2*beta*dt(i)/dx*T_amb);
+                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) - (2*beta*dt(i)/dx) )*T(n,m) + (2*dt(i)/rho(i)/c(i)/dy*q_flux) + (2*alpha*dt(i)/dy^2*T(n+1,m)) + (2*alpha*dt(i)/dx^2*T(n,m-1)) + (2*beta*dt(i)/dx*T_amb);
                 % left side between corners
                 elseif m == 1 && n>1 && n<length(y) % left side between corners
-                    T(n,m) = (1 - (2*beta*dt(i)/dx) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*beta*dt(i)/dx*T_amb) + (alpha*dt(i)/dy^2*(T(m,n+1) + T(m,n-1))) + (2*alpha*dt(i)/dx^2*T(m+1,n));
+                    T(n,m) = (1 - (2*beta*dt(i)/dx) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*beta*dt(i)/dx*T_amb) + (alpha*dt(i)/dy^2*(T(n+1,m) + T(n-1,m))) + (2*alpha*dt(i)/dx^2*T(n,m+1));
                 % right side between corners
                 elseif m==length(x) && n>1 && n<length(y) % right side between corners
-                    T(n,m) = (1 - (2*beta*dt(i)/dx) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*beta*dt(i)/dx*T_amb) + (alpha*dt(i)/dy^2*(T(m,n+1) + T(m,n-1))) + (2*alpha*dt(i)/dx^2*T(m-1,n));
+                    T(n,m) = (1 - (2*beta*dt(i)/dx) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (2*beta*dt(i)/dx*T_amb) + (alpha*dt(i)/dy^2*(T(n+1,m) + T(n-1,m))) + (2*alpha*dt(i)/dx^2*T(n,m-1));
                 % top left corner
                 elseif m == 1 && n==length(y) % top left corner
-                    T(n,m) = (1 - (2*beta*dt(i)) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2))*T(n,m) + (2*alpha*dt(i)/dy^2*T(m,n-1)) + (2*alpha*dt(i)/dx^2*T(m+1,n)) + (2*beta*dt(i)/dx*T_amb) + (2*beta*dt(i)/dy*T_amb);
+                    T(n,m) = (1 - (2*beta*dt(i)) - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2))*T(n,m) + (2*alpha*dt(i)/dy^2*T(n-1,m)) + (2*alpha*dt(i)/dx^2*T(n,m+1)) + (2*beta*dt(i)/dx*T_amb) + (2*beta*dt(i)/dy*T_amb);
                 % top between corners
                 elseif m>1 && m<length(x) && n==length(y) % top between corners
-                    T(n,m) = (1 - (2*beta*dt(i)/dy) - (2*alpha*dt(i)/dx^2) -(2*alpha*dt(i)/dy^2))*T(n,m) + (2*beta*dt(i)/dy*T_amb) + (alpha*dt(i)/dy^2*(T(m+1,n) + T(m-1,n))) + (2*alpha*dt(i)/dx^2*T(m,n-1));
+                    T(n,m) = (1 - (2*beta*dt(i)/dy) - (2*alpha*dt(i)/dx^2) -(2*alpha*dt(i)/dy^2))*T(n,m) + (2*beta*dt(i)/dy*T_amb) + (alpha*dt(i)/dy^2*(T(n,m+1) + T(n,m-1))) + (2*alpha*dt(i)/dx^2*T(n-1,m));
                 % top right corner
                 elseif m == length(x) && n==length(y) % top right corner
-                    T(n,m) = (1 - (2*beta*dt(i))- (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2))*T(n,m) + (2*alpha*dt(i)/dy^2*T(m,n-1)) + (2*alpha*dt(i)/dx^2*T(m-1,n)) + (2*beta*dt(i)/dx*T_amb) + (2*beta*dt(i)/dy*T_amb);
+                    T(n,m) = (1 - (2*beta*dt(i))- (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2))*T(n,m) + (2*alpha*dt(i)/dy^2*T(n-1,m)) + (2*alpha*dt(i)/dx^2*T(n,m-1)) + (2*beta*dt(i)/dx*T_amb) + (2*beta*dt(i)/dy*T_amb);
                 % interior points
                 elseif m>1 && m<length(x) && n>1 && n<length(y) % interior points
-                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (alpha*dt(i)/dy^2*(T(m,n+1) + T(m,n-1))) + (alpha*dt(i)/dx^2*(T(m+1,n) + T(m-1,n)));
+                    T(n,m) = (1 - (2*alpha*dt(i)/dy^2) - (2*alpha*dt(i)/dx^2) )*T(n,m) + (alpha*dt(i)/dy^2*(T(n+1,m) + T(n-1,m))) + (alpha*dt(i)/dx^2*(T(n,m+1) + T(n,m-1)));
                 else
                     fprintf('You messed up your indexing, dummy\n');
                 end
