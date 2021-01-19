@@ -134,8 +134,8 @@ for i = 1:length(rho)
     % start while loop ( actually using for loop because idexing is used
     % for keeping track of the temp)
     %for count = 1:max_count(i)
-    count=2; 
-    while count<max_count(i) && (T_top_mid(count)- T_top_mid(count-1))< tol(1) 
+    count=1; 
+    while count<max_count(i) && 
         % for loop for x direction
         for m = 1:length(x)
             
@@ -181,12 +181,17 @@ for i = 1:length(rho)
                     
                     
             end
+            
+            
+            
+            
+            
         end
         
         
         
         % update while loop conditions
-        T_top_mid(count) = T(ceil(length(x)/2), ceil(length(y)));
+        T_top_mid(count+1) = T(ceil(length(x)/2), ceil(length(y)));
         %err = abs(T_top_mid(count+1) - T_goal);
         %if T_top_mid(count+1) > T_goal
         %    break
