@@ -86,7 +86,7 @@ Bi = h * thickness ./ k;
 [dt] = find_dt_please(rho, c, k, h, dx, dy); % function to find the most restrictive dt
 
 % Fo
-Fo = k./rho./c.*dt./dx^2; % fourier number in the x direction -- may need to change to y
+Fo = (k.*dt)./(rho.*c.*dx.^2); %k./rho./c.*dt./dx^2; % fourier number in the x direction -- may need to change to y
 
 
 %% LOOPS!! -- for loop for materials, while loop for time/converging on answer, for loop for x, for y
@@ -125,17 +125,22 @@ for i = 1:length(rho)
     
     %count = 1; % reset counter for while loop so we dont explode
     
+    
     % need to create T array
     T = zeros(length(x), length(y)); % create array of zeros
     T = T + Ti; % add the initial condition
-    T_top_mid = zeros(max_count(i)+1, 1); 
-    T_top_mid(1) = T(ceil(length(x)/2), ceil(length(y))); % find the initial top mid value
+    
+    %T_top_mid = zeros(max_count(i)+1, 1); 
+    %T_top_mid(1) = T(ceil(length(x)/2), ceil(length(y))); % find the initial top mid value
     %err = abs(T_top_mid - T_goal); % stop condition
     % start while loop ( actually using for loop because idexing is used
     % for keeping track of the temp)
     %for count = 1:max_count(i)
-    count=2; 
-    while count<max_count(i) && (T_top_mid(count)- T_top_mid(count-1))< tol(1) 
+    
+     
+    count=1; 
+    error=1; 
+    while count<max_count(i) && error>1e-5
         % for loop for x direction
         for m = 1:length(x)
             
@@ -186,11 +191,15 @@ for i = 1:length(rho)
         
         
         % update while loop conditions
-        T_top_mid(count) = T(ceil(length(x)/2), ceil(length(y)));
+        T_top_mid(count) = T(ceil(length(y)), ceil(length(x)/2));
         %err = abs(T_top_mid(count+1) - T_goal);
         %if T_top_mid(count+1) > T_goal
         %    break
         %end
+        if count>1 
+            
+            error= abs(T_top_mid(count)- T_top_mid(count-1)); 
+        end 
         count=count+1; 
     end
     
@@ -205,9 +214,10 @@ for i = 1:length(rho)
     
     % plot some stuff
     figure(i)
-    plot(t,T_top_mid, '-k', 'linewidth',2)
+    %plot(t,T_top_mid(index(i)), '-k', 'linewidth',2)
     hold on
-    plot(time(i), T_top_mid(end), '*r', 'linewidth',2)
+    plot(t(1:count-1) , T_top_mid(1:count-1), '-k', 'linewidth',2)
+    grid on 
     title(plot_title{i})
     xlabel('Time (s)')
     ylabel('Temperature (K)')
@@ -245,12 +255,13 @@ for i = 1:length(rho)
     %fcn=@(time) exp(-a*time)+((b/a)/(Ti-T_amb))*(1-exp(-a*time)) -((T_goal-T_amb)/ (Ti-T_amb)) ; 
     %time(i)= fzero(fcn, 1) % commenting out for now to reduce conflict, this did not want to run when I tried, even with changing variable names -- AMW
     
+    %{
     figure(4) 
     plot ( T(:,ceil(length(y)/2) ), y) 
     hold on 
     xlabel("Temperature (K) " ) 
     ylabel ("Thickness of Plancha") 
-    
+    %}
 
 end
 

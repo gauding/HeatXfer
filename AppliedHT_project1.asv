@@ -125,17 +125,22 @@ for i = 1:length(rho)
     
     %count = 1; % reset counter for while loop so we dont explode
     
+    
     % need to create T array
     T = zeros(length(x), length(y)); % create array of zeros
     T = T + Ti; % add the initial condition
+    
     T_top_mid = zeros(max_count(i)+1, 1); 
     T_top_mid(1) = T(ceil(length(x)/2), ceil(length(y))); % find the initial top mid value
     %err = abs(T_top_mid - T_goal); % stop condition
     % start while loop ( actually using for loop because idexing is used
     % for keeping track of the temp)
     %for count = 1:max_count(i)
+    
+     
     count=1; 
-    while count<max_count(i) && 
+    error=1; 
+    while count<max_count(i) && error>1e-5
         % for loop for x direction
         for m = 1:length(x)
             
@@ -181,21 +186,20 @@ for i = 1:length(rho)
                     
                     
             end
-            
-            
-            
-            
-            
         end
         
         
         
         % update while loop conditions
-        T_top_mid(count+1) = T(ceil(length(x)/2), ceil(length(y)));
+        T_top_mid(count) = T(ceil(length(x)/2), ceil(length(y)));
         %err = abs(T_top_mid(count+1) - T_goal);
         %if T_top_mid(count+1) > T_goal
         %    break
         %end
+        if count>1 
+            
+            error= abs(T_top_mid(count)- T_top_mid(count-1)); 
+        end 
         count=count+1; 
     end
     
@@ -210,9 +214,9 @@ for i = 1:length(rho)
     
     % plot some stuff
     figure(i)
-    plot(t,T_top_mid, '-k', 'linewidth',2)
+    plot(t,T_top_mid(index(i)), '-k', 'linewidth',2)
     hold on
-    plot(time(i), T_top_mid(end), '*r', 'linewidth',2)
+    plot(time(count), T_top_mid(count), '*r', 'linewidth',2)
     title(plot_title{i})
     xlabel('Time (s)')
     ylabel('Temperature (K)')
