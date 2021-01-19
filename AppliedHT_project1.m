@@ -252,6 +252,8 @@ data_out(15,:) = q_flux_goal; % heat flux required to maintain goal temp as ss (
 data_out(16,:) = T_half_t; % temp at top mid at half time
 data_out(17,:) = time_LC_half_h; % time to 190 deg C for half h value
 
+% this might not work on earlier versions of MATLAB -- let me know and we
+% can figure it out
 filename = 'Project 1 Results Template.xlsx'; % name of spreadsheet file
 writematrix(data_out,filename,'Sheet','Sheet1','Range','B4:D20') % writes data to spreadsheet
 writecell({'Textbook','Textbook','Textbook'},filename,'Sheet','Sheet1','Range','B8:D8') % writes source of properties to spreadsheet
