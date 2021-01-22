@@ -97,6 +97,7 @@ Fo = (k.*dt)./(rho.*c.*dx.^2); %k./rho./c.*dt./dx^2; % fourier number in the x d
 time = zeros(length(rho),1); % time to get to 190 deg C on cook surface (s)
 index = zeros(length(rho),1); % index for time to 190 deg C
 time_LC = zeros(length(rho),1); % time to get to 190 deg C on cook surface (s) (for lumped capacitance)
+index_LC = zeros(length(rho),1); % index for time to 190 deg C
 T_ss_LC = zeros(length(rho),1); % steady state temp for lumped capacitance
 T_ss = zeros(length(rho),1); % steady state temp for finite diff
 tol = [0.001, 0.0000001, 0.0000001];
@@ -107,15 +108,15 @@ T_ss = zeros(length(rho),1); % steady state temp at stated flux (deg C)
 q_flux_new = zeros(length(rho),1); % new flux to required to maintain at 190 deg C (W/m^2)
 T_half_time = zeros(length(rho),1); % temp at top center at half the time to 190 deg C
 time_half_h = zeros(length(rho),1); % time to 190 deg C with half h value (s)
-
+has_plot = 0;
 % plot title cell array to generate plot titles in the loop
 plot_title = {'Top Center Temperature vs Time for Aluminum','Top Center Temperature vs Time for Cast Iron','Top Center Temperature vs Time for Ceramic Brick'};
 
 
-max_count = [250000000, 100000000, 20000000];
-
+max_count = [2E6, 5E5, 2E4]; % maximum counts before end of loop -- if tolerance is changed, these will need to be updated
+actual_count = [1380774, 459501, 14281]; % count outputs to convergence at ss for tolerance of 1e-5
 %max_count = 1e5; % commenting out to reduce conflict -- AMW
-
+tic
 % actually start the loop now
 for i = 1:length(rho)
     
@@ -130,7 +131,9 @@ for i = 1:length(rho)
     T = zeros(length(y), length(x)); % create array of zeros
     T = T + Ti; % add the initial condition
     
-    %T_top_mid = zeros(max_count(i)+1, 1); 
+    % set up the top center temp array, which will be different for each
+    % material due to changes in loop numbers
+    T_top_mid = zeros(actual_count(i),1);
     T_top_mid(1) = T(ceil(length(y)),ceil(length(x)/2)); % find the initial top mid value
     %err = abs(T_top_mid - T_goal); % stop condition
     % start while loop ( actually using for loop because idexing is used
@@ -140,7 +143,7 @@ for i = 1:length(rho)
      
     count=1; 
     error=1; 
-    while count<max_count(i) && error>1e-7
+    while count<max_count(i) && error>1e-5
         % for loop for x direction
         for m = 1:length(x)
             
@@ -188,7 +191,18 @@ for i = 1:length(rho)
             end
         end
         
-        
+        % plot centerline at half time to operating temp for CI
+        if i == 2 && abs(count * dt(i) - (0.5 * 878.787648582996)) < 1e-3
+            figure(4) 
+            plot ( T(:,ceil(length(x)/2) ), y, 'linewidth',2) 
+            hold on 
+            xlabel("Temperature (K)" ) 
+            ylabel ("Thickness of Plancha (m)")
+            title('Centerline Temperature Distribution for Cast Iron')
+            has_plot = 1;
+        elseif i ==2 && count == length(T_top_mid) && has_plot == 0
+            fprintf('There was a problem plotting the centerline at the half time to operating temp for CI\n')
+        end
         
         % update while loop conditions
         T_top_mid(count) = T(ceil(length(y)), ceil(length(x)/2));
@@ -202,6 +216,9 @@ for i = 1:length(rho)
         end 
         count=count+1; 
     end
+    % print counts and lengths to check stuff
+    fprintf('number of loops: %f\n',count-1)
+    fprintf('length of T_top_mid: %f\n',length(T_top_mid))
     
     
     % find the time
@@ -214,7 +231,7 @@ for i = 1:length(rho)
     
     % plot some stuff
     figure(i)
-    %plot(t,T_top_mid(index(i)), '-k', 'linewidth',2)
+    plot(time(i),T_top_mid(index(i)), '*r', 'linewidth',2)
     hold on
     plot(t(1:count-1) , T_top_mid(1:count-1), '-k', 'linewidth',2)
     grid on 
@@ -224,7 +241,13 @@ for i = 1:length(rho)
     
     % Lumped Capacitance
     time_LC(i) = 1/a(i) * log((Ti-T_amb-(b(i)/a(i)))/(T_goal-T_amb-(b(i)/a(i)))); % time to desired temp using lumped capacitance method
+    T_LC = (Ti - T_amb - (b(i)./a(i))) .* exp(-a(i).*t) + T_amb + (b(i)./a(i)); % temp in lumped capacitance
+    F_LC = find(T_LC < T_goal); % finds temp less than goal temp
+    index_LC(i) = F_LC(end) + 1; % index of goal temp
     
+    plot(time_LC(i), T_LC(index_LC(i)), '^r', 'linewidth', 2)
+    plot(t, T_LC, '--b', 'linewidth', 2)
+    legend('FD Goal Temp','FD','LC Goal Temp', 'LC', 'location', 'southeast')
 
     % Lumped Capacitance steady state temp
     T_ss_LC(i) = T_amb + (b(i)/a(i));
@@ -255,16 +278,12 @@ for i = 1:length(rho)
     %fcn=@(time) exp(-a*time)+((b/a)/(Ti-T_amb))*(1-exp(-a*time)) -((T_goal-T_amb)/ (Ti-T_amb)) ; 
     %time(i)= fzero(fcn, 1) % commenting out for now to reduce conflict, this did not want to run when I tried, even with changing variable names -- AMW
     
-    %{
-    figure(4) 
-    plot ( T(:,ceil(length(y)/2) ), y) 
-    hold on 
-    xlabel("Temperature (K) " ) 
-    ylabel ("Thickness of Plancha") 
-    %}
+    
+     
+    
 
 end
-
+toc
 % print the times
 fprintf('Time to 190 deg C for Al: %f seconds\n',time(1));
 fprintf('Time to 190 deg C for Cast Iron: %f seconds\n',time(2));
