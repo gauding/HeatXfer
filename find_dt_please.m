@@ -7,7 +7,7 @@ dt1 = 1 ./ (2./rho./c .* (h./dy + h./dx + k./dy.^2 + k./dx.^2)); % dt criterion 
 dt2 = 1 ./ (2./rho./c .* (h./dx + k./dy.^2 + k./dx.^2)); % dt criterion for sides
 dt3 = 1 ./ (2./rho./c .* (h./dy + k./dx.^2 + k./dy.^2)); % dt criterion for top
 dt4 = 1 ./ (2./rho./c .* (k./dy.^2 + k./dx.^2 + h./dx)); % dt criterion for bottom corners
-dt5 = 1 ./ (k./rho./c .* (2./dy.^2 + 3./dx.^2)); % dt criterion for bottom
+dt5 = 1 ./ (2.*k./rho./c .* (1./dy.^2 + 1./dx.^2)); % dt criterion for bottom
 dt6 = 1 ./ (2.*k./rho./c .* (1./dy.^2 + 1./dx.^2)); % dt criterion for interior
 
 % put them all in an array
